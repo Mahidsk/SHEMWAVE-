@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SHEMWAVE — Single File Smart Home SPA</title>
+
+  <!-- Font Awesome icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <style>
+    /* ---------- Theme & reset ---------- */
+    :root{
+      --bg1:#03151a; --accent:#00b4d8; --accent2:#0077b6; --muted:#9fb3bd; --card:#071826;
+      --radius:12px;
+      --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{ background:linear-gradient(180deg,#041a20,#001217); color:#e9fbff; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+    /* ---------- App shell ---------- */
+    .app { max-width:1200px; margin:28px auto; padding:16px; display:flex; gap:20px; align-items:stretch; }
+    .sidebar { width:260px; min-width:220px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:14px; box-shadow: 0 12px 36px rgba(0,0,0,0.6); }
+    .main { flex:1; border-radius:var(--radius); overflow:hidden; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); display:flex; flex-direction:column; min-height:520px; box-shadow: 0 14px 40px rgba(0,0,0,0.6); }
+
+    /* ---------- Header ---------- */
+    header.app-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .logo { width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#022; background:linear-gradient(135deg,var(--accent),var(--accent2)); box-shadow: 0 8px 18px rgba(0,180,216,0.12); }
+    .brand h1 { margin:0; font-size:1.05rem; letter-spacing:0.4px; }
+    .subtle { color:var(--muted); font-size:0.86rem; }
+
+    /* ---------- Rooms list ---------- */
+    .rooms { display:flex; flex-direction:column; gap:10px; overflow:auto; padding-right:6px; }
+    .room-item { display:flex; gap:12px; align-items:center; padding:10px; border-radius:10px; cursor:pointer; border:1px solid rgba(255,255,255,0.02); transition:transform .18s, background .22s; background:transparent; outline:none; }
+    .room-item:hover { transform:translateY(-4px); }
+    .room-item.active { background: linear-gradient(90deg, rgba(0,180,216,0.10), rgba(0,119,182,0.04)); border-color: rgba(0,180,216,0.12); box-shadow: 0 10px 24px rgba(0,180,216,0.06); }
+    .room-thumb { width:64px; height:44px; border-radius:8px; background-size:cover; background-position:center; flex-shrink:0; }
+
+    /* ---------- Login card ---------- */
+    .login-card { margin-top:auto; padding:22px; border-radius:20px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; gap:8px; align-items:center; }
+    .login-inputs { display:flex; flex-direction:column; gap:8px; flex:1; }
+    .login-inputs input { padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.12); color:inherit; outline:none; }
+    .login-btn { background:var(--accent); border:none; padding:10px 12px; border-radius:8px; color:#022; font-weight:800; cursor:pointer; box-shadow: 0 8px 18px rgba(0,180,216,0.12); }
+
+    /* ---------- Main content ---------- */
+    .main-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; gap:12px; }
+    .page-title h2 { margin:0; font-size:1.05rem; }
+    .page-sub { color:var(--muted); font-size:0.9rem; }
+
+    .content-wrap { position:relative; flex:1; display:flex; gap:20px; padding:18px; overflow:hidden; }
+    .bg-viewport { position:absolute; inset:0; background-size:cover; background-position:center; filter: blur(8px) saturate(120%) brightness(.55); transform: scale(1.02); z-index:0; transition: background-image .6s ease; }
+    .bg-overlay { position:absolute; inset:0; background: linear-gradient(180deg, rgba(2,14,20,0.2), rgba(2,14,20,0.48)); z-index:1; }
+
+    .controls { position:relative; z-index:2; display:flex; flex-direction:column; gap:16px; width:100%; }
+    .device-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
+
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; min-height:120px; transition: transform .22s ease, box-shadow .22s ease; cursor:pointer; opacity:0; transform:translateY(18px); animation: fadeSlideUp .45s ease forwards; }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(0,0,0,0.4); }
+    .card .iconwrap { font-size:28px; width:56px; height:56px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--accent); background: rgba(255,255,255,0.02); }
+    .card h3 { margin:0; }
+    .status { color:var(--muted); font-weight:700; margin-top:6px; }
+
+    .card.active { background: linear-gradient(180deg, rgba(0,180,216,0.08), rgba(0,119,182,0.04)); box-shadow: 0 20px 36px rgba(0,180,216,0.06); transform:translateY(-8px); }
+
+    .fan-panel { display:flex; gap:14px; align-items:center; background: rgba(255,255,255,0.02); border-radius:12px; padding:12px; }
+    .slider { -webkit-appearance:none; appearance:none; height:8px; border-radius:8px; background: linear-gradient(90deg,var(--accent),var(--accent2)); width:100%; outline:none; }
+    .slider::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:white; border:3px solid var(--accent2); }
+
+    .button-row { display:flex; justify-content:flex-end; gap:12px; align-items:center; }
+    .btn { padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:800; }
+    .btn.primary { background:var(--accent2); color:#022; }
+    .btn.warn { background:#ff6b6b; color:#210; }
+
+    .placeholder { padding:28px; color:var(--muted); text-align:center; border-radius:10px; background:rgba(255,255,255,0.01); }
+
+    /* ---------- Animations ---------- */
+    @keyframes fadeSlideUp { from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+    @keyframes fadeIn { from{ opacity:0 } to{ opacity:1 } }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width:980px){
+      .app { flex-direction:column; width:calc(100% - 24px); margin:12px; }
+      .sidebar{ width:100%; display:flex; flex-direction:row; gap:10px; padding:8px; overflow:auto; border-radius:10px; }
+      .rooms { flex-direction:row; gap:10px; }
+      .room-item { min-width:160px; flex-shrink:0; }
+      .main { min-height:60vh; }
+    }
+
+    /* small focus */
+    .room-item:focus, .card:focus, .login-btn:focus, .btn:focus { outline:none; box-shadow:0 0 0 4px rgba(0,180,216,0.08); border-radius:10px; }
+  </style>
+</head>
+<body>
+  <!-- Firebase libs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+  <div id="root">
+    <!-- APP SHELL (SPA) -->
+    <div class="app" id="appShell" style="display:none">
+      <!-- Sidebar -->
+      <aside class="sidebar" aria-label="Rooms & login">
+        <div class="brand">
+          <div class="logo">MS</div>
+          <div>
+            <h1>SHEMWAVE</h1>
+            <div class="subtle">Smart Home ENERGY MANAGEMENT</div>
+          </div>
+        </div>
+
+        <nav class="rooms" id="roomList" role="tablist" aria-label="Rooms">
+          <!-- generated -->
+        </nav>
+
+        <div class="login-card" id="loginCard">
+          <div class="login-inputs">
+            <input id="email" type="email" placeholder="Email" aria-label="email" autocomplete="username">
+            <input id="password" type="password" placeholder="Password" aria-label="password" autocomplete="current-password">
+          </div>
+          <button id="loginBtn" class="login-btn" aria-label="Login">Login</button>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main" role="main" aria-live="polite">
+        <div class="main-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="page-title">
+            <h2 id="roomTitle">Living Room</h2>
+            <div class="page-sub" id="roomSubtitle">Lights & Fan</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div class="subtle" id="connText">disconnected</div>
+            <button id="logoutBtn" class="btn" title="Logout" style="display:none"><i class="fas fa-sign-out-alt"></i></button>
+          </div>
+        </div>
+
+        <section class="content-wrap">
+          <div class="bg-viewport" id="bgViewport" aria-hidden="true"></div>
+          <div class="bg-overlay" aria-hidden="true"></div>
+
+          <div class="controls">
+            <div class="device-grid" id="deviceGrid" aria-live="polite">
+              <div class="placeholder">Please log in to control devices.</div>
+            </div>
+
+            <div class="fan-panel" role="group" aria-label="Fan speed">
+              <div style="width:56px;display:flex;align-items:center;justify-content:center">
+                <i class="fas fa-fan" style="font-size:22px;color:var(--accent)"></i>
+              </div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div style="font-weight:700">Ceiling Fan</div>
+                  <div id="fanSpeedValue" style="font-weight:800;color:var(--muted)">1</div>
+                </div>
+                <input id="fanSpeedSlider" class="slider" type="range" min="1" max="4" value="1" aria-label="Fan speed">
+              </div>
+              <div style="width:120px;display:flex;justify-content:flex-end">
+                <button id="allOffBtn" class="btn warn">ALL OFF</button>
+              </div>
+            </div>
+
+        
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- LOGIN PAGE (shown initially if not authed) -->
+    <div id="loginView" style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+      <div style="width:360px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:22px;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,0.6);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div class="logo" style="width:56px;height:56px;">MS</div>
+          <div>
+            <h2 style="margin:0">SHEMWAVE</h2>
+            <div class="subtle">Smart Home ENERGY MANAGEMENT</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <input id="loginEmail" type="email" placeholder="Email" />
+          <input id="loginPassword" type="password" placeholder="Password" />
+          <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:8px">
+            <button id="loginSubmit" class="btn primary" style="padding:10px 16px">Login</button>
+            <button id="demoBtn" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,0.05)">Demo</button>
+          </div>
+         
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align:center;color:rgba(255,255,255,0.12);padding:12px;font-weight:700">© Smart Home ENERGY MANAGEMENT (SHEMWAVE)</footer>
+
+  <script>
+  /*******************************
+   * Single-file SPA — app.js
+   *******************************/
+
+  // ----------- Firebase config -----------
+  // REPLACE these values with your Firebase project's values.
+  const firebaseConfig = {
+      apiKey: "AIzaSyAkjDnnO-8pLo6nluPc0YfqVFke-EFOxNs",
+      authDomain: "shemwave-sample.firebaseapp.com",
+      databaseURL: "https://shemwave-sample-default-rtdb.firebaseio.com",
+      projectId: "shemwave-sample",
+      storageBucket: "shemwave-sample.firebasestorage.app",
+      messagingSenderId: "538284696022",
+      appId: "1:538284696022:web:45ba3733e8a831165b0477",
+      measurementId: "G-VZBK92Y9F6"
+    };
+  // initialize firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  // ---------- App data ----------
+ const roomImages = {
+      room1: 'images/IMG_7823.JPEG',
+      room2: 'images/IMG_7809.JPEG',
+      room3: 'images/IMG_7818.JPEG',
+      room4: 'images/IMG_7822.JPEG'
+    };
+
+  const roomDevices = {
+    room1: [
+      { id: "L1", name: "Bed Light", icon: "fas fa-lightbulb" },
+      { id: "L2", name: "Main Light", icon: "fas fa-lightbulb" },
+      { id: "L3", name: "Panel Light", icon: "fas fa-lightbulb" },
+      { id: "L4", name: "Accent Light", icon: "fas fa-lightbulb" },
+      { id: "L5", name: "Strip Light", icon: "fas fa-lightbulb" },
+      { id: "FAN", name: "Fan", icon: "fas fa-fan" }
+    ],
+    room2: [
+      { id: "L1", name: "Light 1", icon: "fas fa-lightbulb" },
+      { id: "L2", name: "Light 2", icon: "fas fa-lightbulb" },
+      { id: "L3", name: "Light 3", icon: "fas fa-lightbulb" },
+      { id: "L4", name: "Light 4", icon: "fas fa-lightbulb" },
+      { id: "L5", name: "Night Light", icon: "fas fa-lightbulb" },
+      { id: "FAN", name: "Fan", icon: "fas fa-fan" }
+    ],
+    room3: [
+      { id: "L1", name: "Light 1", icon: "fas fa-lightbulb" },
+      { id: "L2", name: "Light 2", icon: "fas fa-lightbulb" },
+      { id: "L3", name: "Light 3", icon: "fas fa-lightbulb" },
+      { id: "L4", name: "Light 4", icon: "fas fa-lightbulb" },
+      { id: "L5", name: "Light 5", icon: "fas fa-lightbulb" },
+      { id: "FAN", name: "Fan", icon: "fas fa-fan" }
+    ],
+    room4: [
+      { id: "L1", name: "Light 1", icon: "fas fa-lightbulb" },
+      { id: "L2", name: "Light 2", icon: "fas fa-lightbulb" },
+      { id: "L3", name: "Light 3", icon: "fas fa-lightbulb" },
+      { id: "L4", name: "Light 4", icon: "fas fa-lightbulb" },
+      { id: "L5", name: "Light 5", icon: "fas fa-lightbulb" },
+      { id: "FAN", name: "Fan", icon: "fas fa-fan" }
+    ]
+  };
+
+  // ---------- DOM refs ----------
+  const appShell = document.getElementById('appShell');
+  const loginView = document.getElementById('loginView');
+  const roomList = document.getElementById('roomList');
+  const deviceGrid = document.getElementById('deviceGrid');
+  const bgViewport = document.getElementById('bgViewport');
+  const roomTitle = document.getElementById('roomTitle');
+  const connText = document.getElementById('connText');
+
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginSubmit = document.getElementById('loginSubmit');
+  const demoBtn = document.getElementById('demoBtn');
+
+  const loginCardEmail = document.getElementById('email'); // sidebar login inputs (duplicate basic)
+  const loginCardPassword = document.getElementById('password');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  const fanSpeedSlider = document.getElementById('fanSpeedSlider');
+  const fanSpeedValue = document.getElementById('fanSpeedValue');
+  const allOffBtn = document.getElementById('allOffBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  // ---------- runtime state ----------
+  let currentRoom = 'room1';
+  let relayRefs = []; // {ref, id, el}
+  let fanSpeedRef = null;
+  let lastStates = {};
+  let isAuthenticated = false;
+
+  // ---------- helpers ----------
+  function friendlyRoomName(key){
+    return {room1:'Living Room', room2:'Bedroom', room3:'Main Room', room4:'Kitchen'}[key] || key;
+  }
+
+  function showApp(){
+    loginView.style.display = 'none';
+    appShell.style.display = 'flex';
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+  function showLogin(){
+    appShell.style.display = 'none';
+    loginView.style.display = 'flex';
+  }
+
+  // create sidebar room list
+  function createRoomList(){
+    roomList.innerHTML = '';
+    Object.keys(roomDevices).forEach(roomKey=>{
+      const div = document.createElement('div');
+      div.className = 'room-item' + (roomKey===currentRoom ? ' active' : '');
+      div.tabIndex = 0;
+      div.dataset.room = roomKey;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'room-thumb';
+      thumb.style.backgroundImage = `url('${roomImages[roomKey]}')`;
+      div.appendChild(thumb);
+
+      const meta = document.createElement('div');
+      meta.style.flex = '1';
+      const h3 = document.createElement('h3'); h3.textContent = friendlyRoomName(roomKey); h3.style.margin = 0;
+      const p = document.createElement('div'); p.textContent = 'Tap to open'; p.style.color = 'var(--muted)'; p.style.fontSize='0.85rem';
+      meta.appendChild(h3); meta.appendChild(p);
+      div.appendChild(meta);
+
+      div.addEventListener('click', ()=> routeTo(roomKey));
+      div.addEventListener('keydown', (e)=> {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); routeTo(roomKey); }
+        if (e.key === 'ArrowDown') focusNext(div,1);
+        if (e.key === 'ArrowUp') focusNext(div,-1);
+      });
+
+      roomList.appendChild(div);
+    });
+  }
+
+  function focusNext(el,dir){
+    const nodes = Array.from(roomList.querySelectorAll('.room-item'));
+    const idx = nodes.indexOf(el);
+    const next = nodes[(idx + dir + nodes.length) % nodes.length];
+    next.focus();
+  }
+
+  // ---------- Firebase listeners & UI ----------
+  function clearListeners(){
+    relayRefs.forEach(r => r.ref.off());
+    relayRefs = [];
+    if (fanSpeedRef) { fanSpeedRef.off(); fanSpeedRef = null; }
+    lastStates = {};
+  }
+
+  function setRoomBackground(room){
+    bgViewport.style.backgroundImage = `url('${roomImages[room]}')`;
+  }
+
+  function setupRoom(room){
+    clearListeners();
+    currentRoom = room;
+
+    document.querySelectorAll('.room-item').forEach(item=>{
+      item.classList.toggle('active', item.dataset.room === room);
+    });
+
+    roomTitle.textContent = friendlyRoomName(room);
+    setRoomBackground(room);
+
+    deviceGrid.innerHTML = '';
+
+    roomDevices[room].forEach((device, idx)=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.tabIndex = 0;
+      card.id = `device-${device.id}`;
+      card.style.animationDelay = `${0.08 * (idx+1)}s`;
+      card.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="iconwrap"><i class="${device.icon}"></i></div>
+          <div style="flex:1">
+            <h3 style="margin:0">${device.name}</h3>
+            <div class="status" id="status-${device.id}">Loading...</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div style="font-size:0.85rem;color:var(--muted)">tap to toggle</div>
+          <div style="font-weight:800;color:var(--muted)">${device.id}</div>
+        </div>
+      `;
+      deviceGrid.appendChild(card);
+
+      const relayRef = db.ref(`/${room}/${device.id}`);
+      relayRefs.push({ ref: relayRef, id: device.id, el: card });
+
+      relayRef.on('value', snapshot => {
+        const val = snapshot.val();
+        lastStates[device.id] = !!val;
+        const statusEl = document.getElementById(`status-${device.id}`);
+        if (val) {
+          card.classList.add('active');
+          card.setAttribute('aria-pressed','true');
+          statusEl.textContent = 'ON';
+        } else {
+          card.classList.remove('active');
+          card.setAttribute('aria-pressed','false');
+          statusEl.textContent = 'OFF';
+        }
+      });
+
+      card.addEventListener('click', ()=>{
+        const newState = !lastStates[device.id];
+        relayRef.set(newState).catch(err=>console.error('set err',err));
+      });
+      card.addEventListener('keydown', (e)=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); card.click(); } });
+    });
+
+    // Fan speed listener
+    fanSpeedRef = db.ref(`/${room}/FANSpeed`);
+    fanSpeedRef.on('value', snap => {
+      const speed = snap.val() || 1;
+      fanSpeedSlider.value = speed;
+      fanSpeedValue.textContent = speed;
+    });
+  }
+
+  // ---------- Routing (hash) ----------
+  function routeTo(roomKey){
+    if (!roomDevices[roomKey]) return;
+    location.hash = roomKey;
+    // setupRoom will be called from hashchange handler
+  }
+
+  function handleHash(){
+    const hash = (location.hash || '#room1').replace('#','');
+    const roomKey = roomDevices[hash] ? hash : 'room1';
+    setupRoom(roomKey);
+  }
+  window.addEventListener('hashchange', handleHash);
+
+  // ---------- Auth flow ----------
+  // Quick demo credentials button (creates a temporary anonymous user? we will attempt to sign in with a default if available)
+  demoBtn.addEventListener('click', ()=> {
+    // Try to sign in anonymously if developer hasn't set up a demo account
+    auth.signInAnonymously().then(()=> {
+      onAuthenticated();
+    }).catch(err=> {
+      alert('Demo login failed: ' + err.message);
+    });
+  });
+
+  loginSubmit.addEventListener('click', ()=> {
+    const email = loginEmail.value.trim();
+    const pass = loginPassword.value;
+    if (!email || !pass) { alert('Enter email and password'); return; }
+    auth.signInWithEmailAndPassword(email, pass)
+      .then(()=> onAuthenticated())
+      .catch(err=> alert('Login failed: ' + err.message));
+  });
+
+  // sidebar login as well (smaller)
+  if (loginBtn) {
+    loginBtn.addEventListener('click', ()=> {
+      const email = loginCardEmail ? loginCardEmail.value.trim() : '';
+      const pass  = loginCardPassword ? loginCardPassword.value : '';
+      if (!email || !pass) { alert('Enter email & password'); return; }
+      auth.signInWithEmailAndPassword(email, pass)
+        .then(()=> onAuthenticated())
+        .catch(err=> alert('Login failed: ' + err.message));
+    });
+  }
+
+  logoutBtn.addEventListener('click', ()=> {
+    auth.signOut().then(()=> {
+      isAuthenticated = false;
+      showLogin();
+      connText.textContent = 'disconnected';
+      clearListeners();
+      deviceGrid.innerHTML = '<div class="placeholder">Please log in to control devices.</div>';
+      loginEmail.value = ''; loginPassword.value = '';
+    }).catch(err => alert('Logout failed: ' + err.message));
+  });
+
+  function onAuthenticated(){
+    isAuthenticated = true;
+    showApp();
+    connText.textContent = 'connected';
+    createRoomList();
+    // navigate to hash or default to room1
+    const initial = (location.hash && roomDevices[location.hash.replace('#','')]) ? location.hash.replace('#','') : 'room1';
+    location.hash = initial;
+    handleHash();
+    // hide login values in sidebar
+    if (document.getElementById('loginCard')) document.getElementById('loginCard').style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+  }
+
+  // Persist auth state
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      onAuthenticated();
+    } else {
+      // show login unless the app is already showing (e.g., demo signed in)
+      showLogin();
+      connText.textContent = 'disconnected';
+    }
+  });
+
+  // ---------- Fan + All OFF + Snapshot ----------
+  fanSpeedSlider.addEventListener('input', function(){
+    const speed = parseInt(this.value,10);
+    fanSpeedValue.textContent = speed;
+    if (fanSpeedRef) fanSpeedRef.set(speed).catch(err=>console.error('fan set err', err));
+  });
+
+  allOffBtn.addEventListener('click', ()=> {
+    if (!currentRoom) return;
+    const updates = {};
+    roomDevices[currentRoom].forEach(d => updates[d.id] = false);
+    db.ref(`/${currentRoom}`).update(updates).catch(err=>console.error('allOff err',err));
+    if (fanSpeedRef) fanSpeedRef.set(1);
+  });
+
+  downloadBtn.addEventListener('click', ()=> {
+    const snapshot = { room: currentRoom, states: {...lastStates}, fan: fanSpeedSlider.value, ts: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(snapshot,null,2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `shemwave-${currentRoom}-snapshot.json`; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // ---------- Init UI ----------
+
+  // initially hide app shell while auth resolves (auth.onAuthStateChanged will show login or app)
+  appShell.style.display = 'none';
+  loginView.style.display = 'flex';
+
+  // Pre-create the room list (will be updated on auth)
+  createRoomList();
+
+  // safe cleanup
+  window.addEventListener('beforeunload', ()=> clearListeners());
+  </script>
+</body>
+</html>
