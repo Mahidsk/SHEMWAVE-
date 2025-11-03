@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaTech | SHEMWAVE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary: #0277bd;
+            --secondary-light: #58a5f0;
+            --accent: #ff9800;
+            --text-light: #f5f5f5;
+            --text-dark: #333;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --bg-gradient: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #4caf50 100%);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Page Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            animation: fadeIn 1s ease;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transform: translateY(0);
+            transition: var(--transition);
+        }
+
+        .login-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .company-name {
+            font-size: 2.2rem;
+            color: var(--primary-dark);
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-dark);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #01579b;
+        }
+
+        /* Dashboard Styles */
+        .dashboard {
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: var(--text-light);
+            font-size: 2.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-light);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 10px;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+        }
+
+        .card-title h3 {
+            font-size: 1.4rem;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .temperature-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-on {
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+        }
+
+        .status-off {
+            background: #f44336;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: var(--transition);
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .appliance-list {
+            margin-top: 20px;
+        }
+
+        .appliance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .appliance-item:last-child {
+            border-bottom: none;
+        }
+
+        .appliance-name {
+            font-weight: 500;
+        }
+
+        .add-appliance-form {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .schedule-list {
+            margin-top: 20px;
+        }
+
+        .schedule-item {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .schedule-info {
+            flex: 1;
+        }
+
+        .schedule-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #f44336;
+            color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            display: none;
+            z-index: 1000;
+            animation: slideInRight 0.5s ease;
+        }
+
+        .alert.show {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert i {
+            font-size: 1.5rem;
+        }
+
+        .working-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .working-true {
+            background: rgba(76, 175, 80, 0.2);
+            color: #2e7d32;
+        }
+
+        .working-false {
+            background: rgba(244, 67, 54, 0.2);
+            color: #c62828;
+            animation: pulse-alert 1s infinite;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes pulse-alert {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-card">
+            <div class="logo">
+                <i class="fas fa-water"></i>
+            </div>
+            <h1 class="company-name">SHEMWAVE</h1>
+            <h2>AquaTech Dashboard</h2>
+            <p style="margin: 20px 0; color: #666;">Login to access your aqua farming controls</p>
+            
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password">
+            </div>
+            
+            <button class="btn" id="loginBtn">Login</button>
+            <p style="margin-top: 20px; color: #666;">Don't have an account? <a href="#" style="color: var(--primary);">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard container" id="dashboard">
+        <div class="header">
+            <h1><i class="fas fa-water"></i> AquaTech Dashboard</h1>
+            <div class="user-info">
+                <span id="userEmail">user@example.com</span>
+                <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="dashboard-tab">Dashboard</div>
+            <div class="nav-tab" data-tab="appliances-tab">Aqua Appliances</div>
+            <div class="nav-tab" data-tab="schedule-tab">Schedule</div>
+            <div class="nav-tab" data-tab="profile-tab">Profile</div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard-tab">
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-title">
+                        <h3>Temperature</h3>
+                        <i class="fas fa-thermometer-half card-icon"></i>
+                    </div>
+                    <div class="temperature-value">24.5°C</div>
+                    <p style="text-align: center; color: #666;">Optimal for aqua farming</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <h3>Light Status</h3>
+                        <i class="fas fa-lightbulb card-icon"></i>
+                    </div>
+                    <div class="appliance-item">
+                        <div>
+                            <span class="status-indicator" id="lightStatusIndicator"></span>
+                            <span class="appliance-name">L1</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="lightToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <p style="margin-top: 15px; color: #666;">Controls the lighting for your aqua farm</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <h3>Motor Status</h3>
+                        <i class="fas fa-cog card-icon"></i>
+                    </div>
+                    <div class="appliance-item">
+                        <div>
+                            <span class="status-indicator" id="motorStatusIndicator"></span>
+                            <span class="appliance-name">M1</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="motorToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="working-status" id="workingStatus">
+                        Motor Working: <span id="workingValue">Yes</span>
+                    </div>
+                    <p style="margin-top: 15px; color: #666;">Controls the water circulation motor</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <h3>System Status</h3>
+                    <i class="fas fa-chart-line card-icon"></i>
+                </div>
+                <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--primary);">98%</div>
+                        <div style="color: #666;">Uptime</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--secondary);">24/7</div>
+                        <div style="color: #666;">Monitoring</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; color: var(--accent);">0</div>
+                        <div style="color: #666;">Alerts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appliances Tab -->
+        <div class="tab-content" id="appliances-tab">
+            <div class="card">
+                <div class="card-title">
+                    <h3>Manage Aqua Appliances</h3>
+                    <i class="fas fa-plus card-icon"></i>
+                </div>
+                <p style="margin-bottom: 20px; color: #666;">Add and manage your aqua farming appliances</p>
+                
+                <div class="add-appliance-form">
+                    <h4 style="margin-bottom: 15px;">Add New Appliance</h4>
+                    <div class="form-group">
+                        <input type="text" id="applianceName" placeholder="Appliance Name" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                    <button class="btn" id="addApplianceBtn">Add Appliance</button>
+                </div>
+
+                <div class="appliance-list" id="customAppliances">
+                    <!-- Custom appliances will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div class="tab-content" id="schedule-tab">
+            <div class="card">
+                <div class="card-title">
+                    <h3>Schedule Management</h3>
+                    <i class="fas fa-clock card-icon"></i>
+                </div>
+                <p style="margin-bottom: 20px; color: #666;">Schedule your appliances to turn on/off automatically</p>
+                
+                <div class="add-appliance-form">
+                    <h4 style="margin-bottom: 15px;">Add New Schedule</h4>
+                    <div class="form-group">
+                        <select id="scheduleAppliance" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="">Select Appliance</option>
+                            <option value="L1">Light (L1)</option>
+                            <option value="M1">Motor (M1)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Days:</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                            <label><input type="checkbox" class="dayCheckbox" value="0"> Sun</label>
+                            <label><input type="checkbox" class="dayCheckbox" value="1"> Mon</label>
+                            <label><input type="checkbox" class="dayCheckbox" value="2"> Tue</label>
+                            <label><input type="checkbox" class="dayCheckbox" value="3"> Wed</label>
+                            <label><input type="checkbox" class="dayCheckbox" value="4"> Thu</label>
+                            <label><input type="checkbox" class="dayCheckbox" value="5"> Fri</label>
+                            <label><input type="checkbox" class="dayCheckbox" value="6"> Sat</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="time" id="scheduleTime" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                    <div class="form-group">
+                        <select id="scheduleAction" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="on">Turn On</option>
+                            <option value="off">Turn Off</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="addScheduleBtn">Add Schedule</button>
+                </div>
+
+                <div class="schedule-list" id="schedulesList">
+                    <!-- Schedules will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div class="tab-content" id="profile-tab">
+            <div class="card">
+                <div class="card-title">
+                    <h3>User Profile</h3>
+                    <i class="fas fa-user card-icon"></i>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 30px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; margin-right: 20px;">
+                        <i class="fas fa-user" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <div>
+                        <h3 id="profileUserName">User Name</h3>
+                        <p id="profileUserEmail" style="color: #666;">user@example.com</p>
+                    </div>
+                </div>
+
+                <div class="add-appliance-form">
+                    <h4 style="margin-bottom: 15px;">Report a Problem</h4>
+                    <p style="margin-bottom: 15px; color: #666;">Having issues with your aqua farming system? Report it to our support team.</p>
+                    <div class="form-group">
+                        <textarea id="problemDescription" placeholder="Describe the problem you're experiencing" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; min-height: 120px;"></textarea>
+                    </div>
+                    <button class="btn" id="reportProblemBtn">Report Problem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert for motor not working -->
+    <div class="alert" id="motorAlert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Motor Malfunction!</strong>
+            <p>Motor is not working properly. Please check immediately.</p>
+        </div>
+        <button class="btn" style="padding: 5px 10px; margin-left: 10px;" id="dismissAlert">Dismiss</button>
+    </div>
+
+    <!-- Audio element for beep sound -->
+    <audio id="alertBeep" loop>
+        <source src="https://assets.mixkit.co/active_storage/sfx/250/250-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkjDnnO-8pLo6nluPc0YfqVFke-EFOxNs",
+            authDomain: "shemwave-sample.firebaseapp.com",
+            databaseURL: "https://shemwave-sample-default-rtdb.firebaseio.com",
+            projectId: "shemwave-sample",
+            storageBucket: "shemwave-sample.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const dashboard = document.getElementById('dashboard');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const userEmail = document.getElementById('userEmail');
+        const profileUserName = document.getElementById('profileUserName');
+        const profileUserEmail = document.getElementById('profileUserEmail');
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const lightToggle = document.getElementById('lightToggle');
+        const motorToggle = document.getElementById('motorToggle');
+        const lightStatusIndicator = document.getElementById('lightStatusIndicator');
+        const motorStatusIndicator = document.getElementById('motorStatusIndicator');
+        const workingStatus = document.getElementById('workingStatus');
+        const workingValue = document.getElementById('workingValue');
+        const addApplianceBtn = document.getElementById('addApplianceBtn');
+        const applianceName = document.getElementById('applianceName');
+        const customAppliances = document.getElementById('customAppliances');
+        const addScheduleBtn = document.getElementById('addScheduleBtn');
+        const scheduleAppliance = document.getElementById('scheduleAppliance');
+        const scheduleTime = document.getElementById('scheduleTime');
+        const scheduleAction = document.getElementById('scheduleAction');
+        const schedulesList = document.getElementById('schedulesList');
+        const reportProblemBtn = document.getElementById('reportProblemBtn');
+        const problemDescription = document.getElementById('problemDescription');
+        const motorAlert = document.getElementById('motorAlert');
+        const dismissAlert = document.getElementById('dismissAlert');
+        const alertBeep = document.getElementById('alertBeep');
+        const dayCheckboxes = document.querySelectorAll('.dayCheckbox');
+
+        // Global variables
+        let currentUser = null;
+        let userPath = "";
+        let appliancesRef;
+        let schedulesRef;
+        let motorWorkingRef;
+        let lightRef;
+        let motorRef;
+        let scheduleInterval;
+
+        // Event Listeners
+        loginBtn.addEventListener('click', handleLogin);
+        logoutBtn.addEventListener('click', handleLogout);
+        
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                switchTab(tabId);
+            });
+        });
+
+        lightToggle.addEventListener('change', () => {
+            updateApplianceStatus('L1', lightToggle.checked);
+        });
+
+        motorToggle.addEventListener('change', () => {
+            updateApplianceStatus('M1', motorToggle.checked);
+        });
+
+        addApplianceBtn.addEventListener('click', addCustomAppliance);
+        addScheduleBtn.addEventListener('click', addSchedule);
+        reportProblemBtn.addEventListener('click', reportProblem);
+        dismissAlert.addEventListener('click', () => {
+            motorAlert.classList.remove('show');
+            alertBeep.pause();
+        });
+
+        // Functions
+        function handleLogin() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            // For demo purposes, we'll simulate login without actual Firebase Auth
+            // In a real app, you would use: auth.signInWithEmailAndPassword(email, password)
+            simulateLogin(email);
+        }
+
+        function simulateLogin(email) {
+            // Extract username from email (part before @)
+            const username = email.split('@')[0];
+            userPath = `/${username}`;
+            
+            currentUser = {
+                email: email,
+                username: username
+            };
+            
+            // Update UI
+            userEmail.textContent = email;
+            profileUserName.textContent = username;
+            profileUserEmail.textContent = email;
+            
+            // Show dashboard
+            loginPage.style.display = 'none';
+            dashboard.style.display = 'block';
+            
+            // Initialize Firebase listeners
+            initializeFirebaseListeners();
+            
+            // Start schedule checking
+            startScheduleChecker();
+        }
+
+        function handleLogout() {
+            // In a real app: auth.signOut()
+            currentUser = null;
+            userPath = "";
+            
+            // Reset UI
+            dashboard.style.display = 'none';
+            loginPage.style.display = 'flex';
+            emailInput.value = "";
+            passwordInput.value = "";
+            
+            // Stop any playing alert sounds
+            alertBeep.pause();
+            motorAlert.classList.remove('show');
+            
+            // Stop schedule checking
+            clearInterval(scheduleInterval);
+        }
+
+        function switchTab(tabId) {
+            // Update active tab
+            navTabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Update active content
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        function initializeFirebaseListeners() {
+            if (!currentUser) return;
+            
+            // Reference to user's data in Firebase
+            const userRef = database.ref(userPath);
+            
+            // Listen for light status changes
+            lightRef = userRef.child('L1');
+            lightRef.on('value', (snapshot) => {
+                const isOn = snapshot.val();
+                lightToggle.checked = isOn;
+                lightStatusIndicator.className = `status-indicator ${isOn ? 'status-on' : 'status-off'}`;
+            });
+            
+            // Listen for motor status changes
+            motorRef = userRef.child('M1');
+            motorRef.on('value', (snapshot) => {
+                const isOn = snapshot.val();
+                motorToggle.checked = isOn;
+                motorStatusIndicator.className = `status-indicator ${isOn ? 'status-on' : 'status-off'}`;
+            });
+            
+            // Listen for motor working status
+            motorWorkingRef = userRef.child('Working');
+            motorWorkingRef.on('value', (snapshot) => {
+                const isWorking = snapshot.val();
+                workingStatus.className = `working-status ${isWorking ? 'working-true' : 'working-false'}`;
+                workingValue.textContent = isWorking ? "Yes" : "No";
+                
+                // If motor is on but not working, show alert and play sound
+                if (motorToggle.checked && !isWorking) {
+                    motorAlert.classList.add('show');
+                    alertBeep.play().catch(e => console.log("Audio play failed:", e));
+                } else {
+                    motorAlert.classList.remove('show');
+                    alertBeep.pause();
+                }
+            });
+            
+            // Reference to custom appliances
+            appliancesRef = userRef.child('appliances');
+            appliancesRef.on('value', (snapshot) => {
+                const appliances = snapshot.val() || {};
+                renderCustomAppliances(appliances);
+            });
+            
+            // Reference to schedules
+            schedulesRef = userRef.child('schedules');
+            schedulesRef.on('value', (snapshot) => {
+                const schedules = snapshot.val() || {};
+                renderSchedules(schedules);
+            });
+        }
+
+        function updateApplianceStatus(appliance, status) {
+            if (!currentUser) return;
+            
+            const ref = database.ref(`${userPath}/${appliance}`);
+            ref.set(status)
+                .then(() => console.log(`${appliance} status updated to ${status}`))
+                .catch(error => console.error('Error updating appliance status:', error));
+        }
+
+        function addCustomAppliance() {
+            const name = applianceName.value.trim();
+            if (!name) {
+                alert('Please enter an appliance name');
+                return;
+            }
+            
+            // Create a unique ID for the appliance
+            const applianceId = 'appliance_' + Date.now();
+            
+            // Add to Firebase
+            appliancesRef.child(applianceId).set({
+                name: name,
+                status: false
+            })
+            .then(() => {
+                applianceName.value = "";
+                console.log('Appliance added successfully');
+            })
+            .catch(error => {
+                console.error('Error adding appliance:', error);
+                alert('Failed to add appliance. Please try again.');
+            });
+        }
+
+        function renderCustomAppliances(appliances) {
+            customAppliances.innerHTML = '';
+            
+            Object.keys(appliances).forEach(key => {
+                const appliance = appliances[key];
+                const applianceElement = document.createElement('div');
+                applianceElement.className = 'appliance-item';
+                applianceElement.innerHTML = `
+                    <div>
+                        <span class="status-indicator ${appliance.status ? 'status-on' : 'status-off'}"></span>
+                        <span class="appliance-name">${appliance.name}</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${appliance.status ? 'checked' : ''} data-id="${key}">
+                        <span class="slider"></span>
+                    </label>
+                `;
+                
+                // Add event listener to the toggle
+                const toggle = applianceElement.querySelector('input');
+                toggle.addEventListener('change', () => {
+                    appliancesRef.child(key).update({ status: toggle.checked });
+                });
+                
+                customAppliances.appendChild(applianceElement);
+            });
+        }
+
+        function addSchedule() {
+            const appliance = scheduleAppliance.value;
+            const time = scheduleTime.value;
+            const action = scheduleAction.value;
+            const days = Array.from(dayCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => parseInt(checkbox.value));
+            
+            if (!appliance || !time || days.length === 0) {
+                alert('Please select an appliance, set a time, and select at least one day');
+                return;
+            }
+            
+            // Create a unique ID for the schedule
+            const scheduleId = 'schedule_' + Date.now();
+            
+            // Add to Firebase
+            schedulesRef.child(scheduleId).set({
+                appliance: appliance,
+                time: time,
+                action: action,
+                days: days
+            })
+            .then(() => {
+                scheduleAppliance.value = "";
+                scheduleTime.value = "";
+                scheduleAction.value = "on";
+                dayCheckboxes.forEach(checkbox => checkbox.checked = false);
+                console.log('Schedule added successfully');
+            })
+            .catch(error => {
+                console.error('Error adding schedule:', error);
+                alert('Failed to add schedule. Please try again.');
+            });
+        }
+
+        function renderSchedules(schedules) {
+            schedulesList.innerHTML = '';
+            
+            Object.keys(schedules).forEach(key => {
+                const schedule = schedules[key];
+                const scheduleElement = document.createElement('div');
+                scheduleElement.className = 'schedule-item';
+                
+                // Convert day numbers to names
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const selectedDays = schedule.days ? schedule.days.map(day => dayNames[day]).join(', ') : 'None';
+                
+                scheduleElement.innerHTML = `
+                    <div class="schedule-info">
+                        <div><strong>${schedule.appliance}</strong> - ${schedule.time}</div>
+                        <div>Action: Turn ${schedule.action}</div>
+                        <div>Days: ${selectedDays}</div>
+                    </div>
+                    <div class="schedule-actions">
+                        <button class="btn" style="padding: 5px 10px;" data-id="${key}">Delete</button>
+                    </div>
+                `;
+                
+                // Add event listener to delete button
+                const deleteBtn = scheduleElement.querySelector('button');
+                deleteBtn.addEventListener('click', () => {
+                    schedulesRef.child(key).remove()
+                        .then(() => console.log('Schedule deleted'))
+                        .catch(error => console.error('Error deleting schedule:', error));
+                });
+                
+                schedulesList.appendChild(scheduleElement);
+            });
+        }
+
+        function startScheduleChecker() {
+            // Check schedules every minute
+            scheduleInterval = setInterval(() => {
+                checkSchedules();
+            }, 60000);
+            
+            // Also check immediately on startup
+            checkSchedules();
+        }
+
+        function checkSchedules() {
+            if (!currentUser) return;
+            
+            // Get current time and day
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                               now.getMinutes().toString().padStart(2, '0');
+            const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            
+            // Get schedules from Firebase
+            schedulesRef.once('value')
+                .then(snapshot => {
+                    const schedules = snapshot.val() || {};
+                    
+                    Object.keys(schedules).forEach(key => {
+                        const schedule = schedules[key];
+                        
+                        // Check if schedule matches current time and day
+                        if (schedule.time === currentTime && 
+                            schedule.days && 
+                            schedule.days.includes(currentDay)) {
+                            
+                            // Execute the scheduled action
+                            const status = schedule.action === 'on';
+                            updateApplianceStatus(schedule.appliance, status);
+                            
+                            console.log(`Executed schedule: ${schedule.appliance} -> ${schedule.action} at ${currentTime}`);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error checking schedules:', error);
+                });
+        }
+
+        function reportProblem() {
+            const description = problemDescription.value.trim();
+            if (!description) {
+                alert('Please describe the problem');
+                return;
+            }
+            
+            // In a real app, you would send this to a backend service
+            // For this demo, we'll simulate sending an email
+            const emailBody = `Problem reported by: ${currentUser.email}%0D%0A%0D%0AProblem Description:%0D%0A${description}`;
+            window.open(`mailto:shemwave@gmail.com?subject=AquaTech Problem Report&body=${emailBody}`);
+            
+            problemDescription.value = "";
+            alert('Problem reported successfully. Thank you for your feedback.');
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            // For demo purposes, pre-fill login form
+            emailInput.value = "abc@gmail.com";
+            passwordInput.value = "60006000";
+            
+            // Check if user is already logged in (in a real app, you would check Firebase auth state)
+            // auth.onAuthStateChanged(user => { ... });
+        });
+    </script>
+</body>
+</html>
